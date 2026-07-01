@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --sp-base: #121212;
+  --sp-surface: #181818;
+  --sp-elevated: #282828;
+  --sp-sidebar: #000000;
+  --sp-green: #1DB954;
+  --sp-green-hover: #1ed760;
+  --sp-text-primary: #ffffff;
+  --sp-text-secondary: #a7a7a7;
+  --sp-text-subdued: #6a6a6a;
+  --sp-border: #282828;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-sp-base: var(--sp-base);
+  --color-sp-surface: var(--sp-surface);
+  --color-sp-elevated: var(--sp-elevated);
+  --color-sp-sidebar: var(--sp-sidebar);
+  --color-sp-green: var(--sp-green);
+  --color-sp-green-hover: var(--sp-green-hover);
+  --color-sp-text-primary: var(--sp-text-primary);
+  --color-sp-text-secondary: var(--sp-text-secondary);
+  --color-sp-text-subdued: var(--sp-text-subdued);
+  --color-sp-border: var(--sp-border);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--sp-base);
+  color: var(--sp-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
+
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--sp-elevated); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--sp-text-subdued); }
