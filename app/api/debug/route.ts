@@ -62,6 +62,7 @@ export async function GET() {
   return NextResponse.json({
     hasSpotifyToken: !!spotifyToken,
     hasGoogleToken: !!googleToken,
+    spotifyGrantedScopes: session.spotify_scope ?? 'not stored',
     spotifyMe,
     spotifyFollowTest: followTest,
     spotifySearchArijitSingh: searchTest,

@@ -29,6 +29,7 @@ export interface SessionData {
   spotify_access_token?: string;
   spotify_refresh_token?: string;
   spotify_expires_at?: number; // Unix ms
+  spotify_scope?: string;
 
   // Google
   google_access_token?: string;

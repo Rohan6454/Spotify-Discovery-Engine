@@ -52,6 +52,8 @@ export async function GET(req: NextRequest) {
   session.spotify_access_token = data.access_token;
   session.spotify_refresh_token = data.refresh_token;
   session.spotify_expires_at = Date.now() + data.expires_in * 1000;
+  session.spotify_scope = data.scope ?? '';
+  console.log('[spotify/callback] granted scopes:', data.scope);
   await session.save();
 
   return NextResponse.redirect(`${APP()}/`);
