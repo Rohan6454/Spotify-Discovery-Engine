@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
   // Follow artists in batches of 50 (Spotify API limit per call)
   const ids: string[] = artistSpotifyIds.slice(0, 50);
   const followRes = await fetch(
-    `https://api.spotify.com/v1/me/following?type=artist`,
-    { method: 'PUT', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) }
+    `https://api.spotify.com/v1/me/following?type=artist&ids=${ids.join(',')}`,
+    { method: 'PUT', headers: { Authorization: `Bearer ${token}` } }
   );
 
   if (!followRes.ok) {
