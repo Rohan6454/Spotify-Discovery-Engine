@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface TopBarProps {
   spotifyUser?: { name: string; avatar: string | null } | null;
 }
@@ -26,6 +28,12 @@ function getInitials(name: string): string {
 }
 
 export default function TopBar({ spotifyUser }: TopBarProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    window.location.href = '/api/auth/logout';
+  };
+
   return (
     <div className="flex items-center justify-between px-6 py-3 shrink-0 bg-[#121212]">
       {/* Navigation arrows */}
@@ -46,10 +54,13 @@ export default function TopBar({ spotifyUser }: TopBarProps) {
         </button>
       </div>
 
-      {/* User avatar */}
+      {/* User avatar with logout dropdown */}
       {spotifyUser && (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-[#282828] rounded-full pl-0.5 pr-3 py-0.5 hover:bg-[#3e3e3e] cursor-pointer transition-colors">
+        <div className="relative">
+          <div
+            className="flex items-center gap-2 bg-[#282828] rounded-full pl-0.5 pr-3 py-0.5 hover:bg-[#3e3e3e] cursor-pointer transition-colors"
+            onClick={() => setMenuOpen(o => !o)}
+          >
             {spotifyUser.avatar ? (
               <img
                 src={spotifyUser.avatar}
@@ -63,6 +74,17 @@ export default function TopBar({ spotifyUser }: TopBarProps) {
             )}
             <span className="text-sm font-semibold text-white">{spotifyUser.name}</span>
           </div>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-36 rounded-md bg-[#282828] shadow-lg z-50 overflow-hidden">
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-3 text-sm text-white hover:bg-[#3e3e3e] transition-colors"
+              >
+                Log out
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
