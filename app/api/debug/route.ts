@@ -12,6 +12,8 @@ export async function GET() {
 
   // Test Spotify search directly
   let searchTest: any = 'no spotify token';
+  let spotifyMe: any = 'no spotify token';
+  let followTest: any = 'no spotify token';
   if (spotifyToken) {
     const res = await fetch(
       'https://api.spotify.com/v1/search?q=Arijit+Singh&type=artist&limit=3',
@@ -23,6 +25,24 @@ export async function GET() {
     } else {
       searchTest = `HTTP ${res.status}: ${await res.text()}`;
     }
+
+    // Check /me for product type (free vs premium) and scopes
+    const meRes = await fetch('https://api.spotify.com/v1/me', {
+      headers: { Authorization: `Bearer ${spotifyToken}` }
+    });
+    if (meRes.ok) {
+      const me = await meRes.json();
+      spotifyMe = { product: me.product, email: me.email, id: me.id };
+    } else {
+      spotifyMe = `HTTP ${meRes.status}`;
+    }
+
+    // Test follow endpoint directly with a known artist (Arijit Singh)
+    const followRes = await fetch(
+      'https://api.spotify.com/v1/me/following?type=artist&ids=4YRxDV8wJFPHPTeXepOstw',
+      { method: 'PUT', headers: { Authorization: `Bearer ${spotifyToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: ['4YRxDV8wJFPHPTeXepOstw'] }) }
+    );
+    followTest = followRes.ok ? 'success' : `HTTP ${followRes.status}: ${await followRes.text()}`;
   }
 
   // YouTube: liked video titles (first 5)
@@ -39,6 +59,8 @@ export async function GET() {
   return NextResponse.json({
     hasSpotifyToken: !!spotifyToken,
     hasGoogleToken: !!googleToken,
+    spotifyMe,
+    spotifyFollowTest: followTest,
     spotifySearchArijitSingh: searchTest,
     youtubeLibrary: {
       likedVideoTitles: likedTitles,
