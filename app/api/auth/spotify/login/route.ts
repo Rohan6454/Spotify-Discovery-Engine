@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
 
 const SCOPES = [
+  'user-read-private',
+  'user-read-email',
   'user-library-read',
   'user-read-recently-played',
   'user-follow-read',
