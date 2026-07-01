@@ -42,7 +42,10 @@ export async function GET() {
       'https://api.spotify.com/v1/me/following?type=artist&ids=4YRxDV8wJFPHPTeXepOstw',
       { method: 'PUT', headers: { Authorization: `Bearer ${spotifyToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: ['4YRxDV8wJFPHPTeXepOstw'] }) }
     );
-    followTest = followRes.ok ? 'success' : `HTTP ${followRes.status}: ${await followRes.text()}`;
+    const followBody = await followRes.text();
+    const followHeaders: Record<string, string> = {};
+    followRes.headers.forEach((v, k) => { followHeaders[k] = v; });
+    followTest = { status: followRes.status, body: followBody, headers: followHeaders };
   }
 
   // YouTube: liked video titles (first 5)
