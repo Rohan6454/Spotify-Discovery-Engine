@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession, ArtistSignal } from '@/lib/session';
 import { getValidGoogleToken } from '@/lib/auth';
+import { extractArtistsFromTitles } from '@/lib/llm';
 
 const LABEL_WORDS = /\b(records|music|entertainment|productions|films|studios|official|vevo|digital|t-series|sony|emi|universal|warner|zee|saregama|tips|speed)\b/i;
 
@@ -94,9 +95,11 @@ export async function GET() {
       : '';
   }
 
-  // Step 2 — Liked videos: extract artist from title AND track channel
+  // Step 2 — Liked videos: collect titles then batch-extract artists via LLM
   let likedUrl = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&myRating=like&maxResults=50';
   let likedCount = 0;
+  const likedItems: { channelId: string; channelTitle: string; videoTitle: string }[] = [];
+
   while (likedUrl && likedCount < 200) {
     const data = await ytGet(likedUrl, token);
     if (!data) break;
@@ -104,17 +107,9 @@ export async function GET() {
       const channelId = item.snippet?.channelId;
       const channelTitle = item.snippet?.channelTitle ?? '';
       const videoTitle = item.snippet?.title ?? '';
-
       if (!isMusicRelevant(videoTitle, channelTitle)) continue;
-
-      // Always track the channel
       if (channelId) ensureById(channelId, channelTitle).likedCount++;
-
-      // Also extract artist name from title if it follows "Artist - Song" pattern
-      const artistName = extractArtistFromTitle(videoTitle);
-      if (artistName && artistName.toLowerCase() !== channelTitle.toLowerCase()) {
-        ensureByName(artistName).likedCount++;
-      }
+      likedItems.push({ channelId, channelTitle, videoTitle });
     }
     likedCount += data.items?.length ?? 0;
     likedUrl = data.nextPageToken
@@ -127,6 +122,7 @@ export async function GET() {
     'https://www.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50',
     token
   );
+  const playlistItems: { videoTitle: string }[] = [];
   for (const pl of (playlistsData?.items ?? []).slice(0, 5)) {
     const itemsData = await ytGet(
       `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${pl.id}&maxResults=50`,
@@ -136,12 +132,41 @@ export async function GET() {
       const id = item.snippet?.videoOwnerChannelId;
       const title = item.snippet?.videoOwnerChannelTitle;
       if (id && title) ensureById(id, title).inPlaylist = true;
-
-      // Also extract artist from playlist video titles
       const videoTitle = item.snippet?.title ?? '';
-      const artistName = extractArtistFromTitle(videoTitle);
-      if (artistName) ensureByName(artistName).inPlaylist = true;
+      if (videoTitle) playlistItems.push({ videoTitle });
     }
+  }
+
+  // LLM batch extraction — send all music video titles at once
+  const allTitles = [
+    ...likedItems.map(i => i.videoTitle),
+    ...playlistItems.map(i => i.videoTitle),
+  ].filter(Boolean);
+
+  const BATCH_SIZE = 40;
+  const llmResults: Record<string, string | null> = {};
+
+  for (let i = 0; i < allTitles.length; i += BATCH_SIZE) {
+    const batch = allTitles.slice(i, i + BATCH_SIZE);
+    const batchResult = await extractArtistsFromTitles(batch);
+    Object.assign(llmResults, batchResult);
+  }
+
+  console.log(`[YouTube signals] LLM processed ${allTitles.length} titles`);
+
+  // Apply LLM results — fall back to regex if LLM returned null
+  for (const item of likedItems) {
+    const llmArtist = llmResults[item.videoTitle];
+    const artistName = llmArtist ?? extractArtistFromTitle(item.videoTitle);
+    if (artistName && artistName.toLowerCase() !== item.channelTitle.toLowerCase()) {
+      ensureByName(artistName).likedCount++;
+    }
+  }
+
+  for (const item of playlistItems) {
+    const llmArtist = llmResults[item.videoTitle];
+    const artistName = llmArtist ?? extractArtistFromTitle(item.videoTitle);
+    if (artistName) ensureByName(artistName).inPlaylist = true;
   }
 
   const result = [...signals.values()].filter(
