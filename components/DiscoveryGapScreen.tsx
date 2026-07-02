@@ -22,6 +22,8 @@ type ArtistRow = GapArtist & { inLibrary: boolean };
 export default function DiscoveryGapScreen() {
   const [artists, setArtists] = useState<ArtistRow[]>([]);
   const [noGapReason, setNoGapReason] = useState<'not_run' | 'no_signals' | 'all_in_library' | null>(null);
+  const [insight, setInsight] = useState<string | null>(null);
+  const [genreTags, setGenreTags] = useState<Record<string, string>>({});
 
   useEffect(() => {
     try {
@@ -34,6 +36,10 @@ export default function DiscoveryGapScreen() {
         if (parsed.length === 0) setNoGapReason('no_signals');
         else if (parsed.every((a: ArtistRow) => a.inLibrary)) setNoGapReason('all_in_library');
       }
+      const storedInsight = localStorage.getItem('de_gap_insight');
+      if (storedInsight) setInsight(storedInsight);
+      const storedTags = localStorage.getItem('de_genre_tags');
+      if (storedTags) setGenreTags(JSON.parse(storedTags));
     } catch {
       setNoGapReason('not_run');
     }
@@ -116,6 +122,14 @@ export default function DiscoveryGapScreen() {
         </div>
       </div>
 
+      {/* LLM Insight card */}
+      {insight && (
+        <div className="mb-6 p-4 rounded-lg bg-[#1DB954]/10 border border-[#1DB954]/20 flex gap-3">
+          <span className="text-[#1DB954] text-lg shrink-0">✦</span>
+          <p className="text-[#e8e8e8] text-sm leading-relaxed">{insight}</p>
+        </div>
+      )}
+
       {/* Artist table */}
       <div className="rounded-lg overflow-hidden bg-[#181818] mb-8">
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-6 py-3 border-b border-[#282828]">
@@ -138,9 +152,11 @@ export default function DiscoveryGapScreen() {
               {/* Artist name */}
               <div className="min-w-0">
                 <p className="text-white font-medium truncate">{artist.spotifyArtistName}</p>
-                {artist.channelTitle !== artist.spotifyArtistName && (
+                {genreTags[artist.spotifyArtistName] ? (
+                  <p className="text-[#1DB954] text-xs truncate mt-0.5">{genreTags[artist.spotifyArtistName]}</p>
+                ) : artist.channelTitle !== artist.spotifyArtistName ? (
                   <p className="text-[#6a6a6a] text-xs truncate mt-0.5">{artist.channelTitle}</p>
-                )}
+                ) : null}
               </div>
 
               {/* Signal badge */}

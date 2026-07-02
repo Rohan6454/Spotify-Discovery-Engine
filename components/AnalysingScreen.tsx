@@ -114,6 +114,24 @@ export default function AnalysingScreen() {
       const sorted = [...accumulated].sort((a: any, b: any) => b.score - a.score);
       localStorage.setItem('de_gap_results', JSON.stringify(sorted));
 
+      // LLM enrichment — insight + genre tags (non-blocking, best effort)
+      try {
+        const gapArtists = sorted.filter((a: any) => !a.inLibrary);
+        const inLibraryArtists = sorted.filter((a: any) => a.inLibrary);
+        const enrichRes = await fetch('/api/gap/enrich', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gapArtists, inLibraryArtists }),
+        });
+        if (enrichRes.ok) {
+          const { insight, genreTags } = await enrichRes.json();
+          if (insight) localStorage.setItem('de_gap_insight', insight);
+          if (genreTags) localStorage.setItem('de_genre_tags', JSON.stringify(genreTags));
+        }
+      } catch {
+        // Non-fatal — discovery screen works fine without enrichment
+      }
+
       if (!cancelled) {
         setTimeout(() => router.push('/discovery'), 600);
       }
