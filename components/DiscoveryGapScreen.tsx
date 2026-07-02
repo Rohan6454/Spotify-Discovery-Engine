@@ -17,22 +17,10 @@ const SpotifyIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const PlusIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-    <path d="M6 1a.5.5 0 0 1 .5.5v4h4a.5.5 0 0 1 0 1h-4v4a.5.5 0 0 1-1 0v-4h-4a.5.5 0 0 1 0-1h4v-4A.5.5 0 0 1 6 1z"/>
-  </svg>
-);
-
 type ArtistRow = GapArtist & { inLibrary: boolean };
-type RowState = 'idle' | 'loading' | 'done' | 'error';
 
 export default function DiscoveryGapScreen() {
   const [artists, setArtists] = useState<ArtistRow[]>([]);
-  const [rowStates, setRowStates] = useState<Record<string, RowState>>({});
-  const [bulkLoading, setBulkLoading] = useState(false);
-  const [playlistUrl, setPlaylistUrl] = useState<string | null>(null);
-  const [bulkError, setBulkError] = useState<string | null>(null);
-
   const [noGapReason, setNoGapReason] = useState<'not_run' | 'no_signals' | 'all_in_library' | null>(null);
 
   useEffect(() => {
@@ -50,52 +38,6 @@ export default function DiscoveryGapScreen() {
       setNoGapReason('not_run');
     }
   }, []);
-
-  const addSingleArtist = async (artist: ArtistRow) => {
-    setRowStates(s => ({ ...s, [artist.channelId]: 'loading' }));
-    try {
-      const res = await fetch('/api/gap/playlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          artistSpotifyIds: [artist.spotifyArtistId],
-          artistNames: [artist.spotifyArtistName],
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed');
-      setRowStates(s => ({ ...s, [artist.channelId]: 'done' }));
-      if (!playlistUrl) setPlaylistUrl(data.playlistUrl);
-    } catch {
-      setRowStates(s => ({ ...s, [artist.channelId]: 'error' }));
-    }
-  };
-
-  const handleCreatePlaylist = async () => {
-    setBulkLoading(true);
-    setBulkError(null);
-    try {
-      const res = await fetch('/api/gap/playlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          artistSpotifyIds: gapArtists.map(a => a.spotifyArtistId),
-          artistNames: gapArtists.map(a => a.spotifyArtistName),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to create playlist');
-      setPlaylistUrl(data.playlistUrl);
-      // Mark all gap artists as added
-      const done: Record<string, RowState> = {};
-      gapArtists.forEach(a => { done[a.channelId] = 'done'; });
-      setRowStates(done);
-    } catch (e: any) {
-      setBulkError(e.message);
-    } finally {
-      setBulkLoading(false);
-    }
-  };
 
   const gapArtists = artists.filter(a => !a.inLibrary);
   const inLibraryArtists = artists.filter(a => a.inLibrary);
@@ -180,11 +122,10 @@ export default function DiscoveryGapScreen() {
           <span className="text-xs font-semibold uppercase tracking-wider text-[#a7a7a7]">Artist</span>
           <span className="text-xs font-semibold uppercase tracking-wider text-[#a7a7a7] text-right w-44">YouTube Signal</span>
           <span className="text-xs font-semibold uppercase tracking-wider text-[#a7a7a7] text-right w-28">In Spotify?</span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#a7a7a7] text-right w-28"></span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#a7a7a7] text-right w-32"></span>
         </div>
 
         {artists.map((artist, i) => {
-          const rowState = rowStates[artist.channelId] ?? 'idle';
           const isGap = !artist.inLibrary;
 
           return (
@@ -222,27 +163,17 @@ export default function DiscoveryGapScreen() {
               </div>
 
               {/* Per-row action */}
-              <div className="w-28 flex justify-end">
-                {isGap && rowState === 'idle' && (
-                  <button
-                    onClick={() => addSingleArtist(artist)}
+              <div className="w-32 flex justify-end">
+                {isGap && (
+                  <a
+                    href={`https://open.spotify.com/artist/${artist.spotifyArtistId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#535353] text-[#a7a7a7] text-xs hover:border-[#1DB954] hover:text-[#1DB954] transition-colors whitespace-nowrap"
                   >
-                    <PlusIcon />
-                    Follow
-                  </button>
-                )}
-                {isGap && rowState === 'loading' && (
-                  <div className="w-4 h-4 rounded-full border-2 border-[#535353] border-t-[#1DB954] animate-spin" />
-                )}
-                {isGap && rowState === 'done' && (
-                  <span className="flex items-center gap-1.5 text-[#1DB954] text-xs">
-                    <SpotifyIcon size={12} />
-                    Following
-                  </span>
-                )}
-                {isGap && rowState === 'error' && (
-                  <span className="text-[#e22134] text-xs">Failed</span>
+                    <SpotifyIcon size={11} />
+                    Open in Spotify
+                  </a>
                 )}
               </div>
             </div>
@@ -250,47 +181,12 @@ export default function DiscoveryGapScreen() {
         })}
       </div>
 
-      {/* Bulk CTA */}
-      {gapArtists.length > 0 && !playlistUrl && (
+      {/* Bottom CTA */}
+      {gapArtists.length > 0 && (
         <div className="flex flex-col items-center gap-3">
-          <button
-            onClick={handleCreatePlaylist}
-            disabled={bulkLoading}
-            className="px-8 py-3.5 rounded-full bg-[#1DB954] text-black font-bold text-sm hover:bg-[#1ed760] hover:scale-[1.02] active:scale-100 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
-          >
-            {bulkLoading ? (
-              <>
-                <div className="w-4 h-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
-                Creating playlist...
-              </>
-            ) : (
-              `Follow all ${gapArtists.length} missing artists on Spotify`
-            )}
-          </button>
-          {bulkError && <p className="text-[#e22134] text-sm">{bulkError}</p>}
-        </div>
-      )}
-
-      {/* Success banner */}
-      {playlistUrl && (
-        <div className="flex items-center justify-between p-4 rounded-lg bg-[#1DB954]/10 border border-[#1DB954]/30">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#1DB954] flex items-center justify-center text-black">
-              <SpotifyIcon />
-            </div>
-            <div>
-              <p className="text-white font-semibold text-sm">Artists followed on Spotify</p>
-              <p className="text-[#a7a7a7] text-xs">{gapArtists.length} artists · now in your Following list</p>
-            </div>
-          </div>
-          <a
-            href={playlistUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 rounded-full bg-[#1DB954] text-black font-bold text-sm hover:bg-[#1ed760] transition-colors"
-          >
-            View in Spotify →
-          </a>
+          <p className="text-[#a7a7a7] text-sm text-center max-w-md">
+            {gapArtists.length} artist{gapArtists.length !== 1 ? 's' : ''} from your YouTube activity {gapArtists.length !== 1 ? 'are' : 'is'} missing from your Spotify library. Click any artist to open them on Spotify.
+          </p>
         </div>
       )}
     </div>
