@@ -52,15 +52,8 @@ export default function DiscoveryGapScreen() {
     }
   }, []);
 
-  // Drop name-extracted signals that only have a single playlist match — too noisy
-  const filteredArtists = artists.filter(a => {
-    const isNameExtracted = a.channelId.startsWith('name:');
-    const playlistOnly = a.signal.inPlaylist && !a.signal.subscribed && a.signal.likedCount === 0;
-    return !(isNameExtracted && playlistOnly);
-  });
-
-  const gapArtists = filteredArtists.filter(a => !a.inLibrary);
-  const inLibraryArtists = filteredArtists.filter(a => a.inLibrary);
+  const gapArtists = artists.filter(a => !a.inLibrary);
+  const inLibraryArtists = artists.filter(a => a.inLibrary);
 
   if (artists.length === 0 || (artists.length > 0 && gapArtists.length === 0)) {
     const reasons: Record<string, { title: string; body: string; detail: string }> = {
