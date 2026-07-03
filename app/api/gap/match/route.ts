@@ -66,9 +66,15 @@ export async function POST(req: NextRequest) {
     let bestMatch: { id: string; name: string } | null = null;
     let bestScore = 0;
 
+    // Minimum Spotify popularity — filters out tribute pages, empty profiles, non-musicians
+    // who happen to have a Spotify page (e.g. athletes, influencers).
+    // Exception: allow low-popularity artists if the user has 3+ strong signals for them.
+    const strongSignalCount = signal.likedCount + (signal.subscribed ? 3 : 0) + (signal.inPlaylist ? 1 : 0);
+    const popularityFloor = strongSignalCount >= 3 ? 5 : 20;
+
     for (const candidate of candidates) {
       const score = similarity(cleanedName, candidate.name);
-      if (score > bestScore && score >= MATCH_THRESHOLD) {
+      if (score > bestScore && score >= MATCH_THRESHOLD && (candidate.popularity ?? 0) >= popularityFloor) {
         bestScore = score;
         bestMatch = { id: candidate.id, name: candidate.name };
       }
