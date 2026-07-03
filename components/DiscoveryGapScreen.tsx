@@ -87,7 +87,7 @@ export default function DiscoveryGapScreen() {
           <p className="text-[#a7a7a7] mb-4">{r.body}</p>
           <p className="text-[#6a6a6a] text-sm leading-relaxed mb-8">{r.detail}</p>
           <a
-            href="/"
+            href="/analysing"
             className="inline-block px-6 py-2.5 rounded-full bg-[#1DB954] text-black font-bold text-sm hover:bg-[#1ed760] transition-colors"
           >
             Run analysis again
