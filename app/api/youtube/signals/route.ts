@@ -191,5 +191,7 @@ export async function GET() {
   const nameSignals = result.filter(s => s.channelId.startsWith('name:'));
   console.log(`[YouTube signals] total=${result.length} name-extracted=${nameSignals.length} sample-names:`, nameSignals.slice(0, 10).map(s => s.channelTitle));
 
-  return NextResponse.json({ signals: result });
+  const likedVideos = likedItems.map(i => ({ title: i.videoTitle, channel: i.channelTitle }));
+
+  return NextResponse.json({ signals: result, likedVideos });
 }

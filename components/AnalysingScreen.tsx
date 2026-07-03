@@ -70,7 +70,8 @@ export default function AnalysingScreen() {
       setStep('youtube', 'active');
       const ytRes = await fetch('/api/youtube/signals');
       if (!ytRes.ok || cancelled) { setStep('youtube', 'error'); setErrorMsg('Failed to read YouTube data.'); return; }
-      const { signals: allSignals } = await ytRes.json();
+      const { signals: allSignals, likedVideos } = await ytRes.json();
+      if (likedVideos?.length) localStorage.setItem('de_yt_liked_videos', JSON.stringify(likedVideos));
 
       // Only search Spotify for name-extracted signals (from video titles like "Arijit Singh")
       // Subscription channel names (T-Series, Career247 etc) never match Spotify artists
