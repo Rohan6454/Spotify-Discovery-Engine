@@ -230,15 +230,14 @@ export default function DiscoveryGapScreen() {
 
       {/* YouTube Liked Videos — filtered to gap artists only */}
       {(() => {
-        const gapChannelNames = new Set(
-          gapArtists.flatMap(a => [
-            a.channelTitle.toLowerCase(),
-            a.spotifyArtistName.toLowerCase(),
-          ])
-        );
-        const gapLikedVideos = likedVideos.filter(v =>
-          gapChannelNames.has(v.channel.toLowerCase())
-        );
+        const gapNames = gapArtists.flatMap(a => [
+          a.channelTitle.toLowerCase(),
+          a.spotifyArtistName.toLowerCase(),
+        ]);
+        const gapLikedVideos = likedVideos.filter(v => {
+          const ch = v.channel.toLowerCase();
+          return gapNames.some(name => ch.includes(name) || name.includes(ch));
+        });
 
         return (
           <div className="mt-10 rounded-lg bg-[#181818] overflow-hidden">
