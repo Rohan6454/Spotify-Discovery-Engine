@@ -63,9 +63,9 @@ export default function DiscoveryGapScreen() {
         detail: 'Go back to the home screen and connect both Spotify and YouTube to run the Discovery Engine.',
       },
       no_signals: {
-        title: 'No artists could be extracted',
-        body: 'We scanned your YouTube liked videos and playlists, but couldn\'t reliably identify artist names from the video titles.',
-        detail: 'This usually happens when video titles don\'t follow a standard "Artist – Song" or "Song | Artist" format, or when your liked videos are mostly non-music content. Try liking more music videos on YouTube and run the analysis again.',
+        title: 'No music activity detected on YouTube',
+        body: 'Discovery Engine scanned your liked videos, subscriptions, and playlists but found no music signals strong enough to match against Spotify.',
+        detail: 'This usually means your YouTube account isn\'t used much for music discovery — most activity is non-music content, or videos weren\'t liked/saved. Try liking music videos on YouTube, subscribing to artist channels (not label channels like T-Series), or saving songs to a YouTube playlist.',
       },
       all_in_library: {
         title: 'No gap — you\'re already covered',
