@@ -4,7 +4,7 @@ import { getValidSpotifyToken } from '@/lib/auth';
 import { cleanChannelName, similarity } from '@/lib/fuzzy';
 
 const BATCH_SIZE = 10;
-const MATCH_THRESHOLD = 0.60;
+const MATCH_THRESHOLD = 0.75;
 
 export async function POST(req: NextRequest) {
   const session = await getSession();

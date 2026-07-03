@@ -37,17 +37,32 @@ function extractArtistFromTitle(videoTitle: string): string | null {
   return null;
 }
 
+// Words that strongly indicate non-music content — if these appear, reject regardless of other signals
+const NON_MUSIC_WORDS = /\b(fight|knockout|ko|boxing|mma|ufc|wrestl|gym|workout|fitness|motivation|bodybuilding|physique|transformation|interview|podcast|vlog|highlights|match|vs\.?|versus|highlights|trailer|movie trailer|reaction|commentary|news|breaking|explained|documentary|highlights|gaming|gameplay|speedrun|challenge|prank|compilation|montage|tutorial|how to|review|unboxing|ranked|tier list)\b/i;
+
+// Explicit music signals — these override everything, even if the title looks odd
+const STRONG_MUSIC_SIGNALS = [
+  'official video', 'official audio', 'official music video', 'music video',
+  'lyrics', 'lyric video', 'audio', 'feat.', 'ft.', 'remix', 'acoustic',
+  'live performance', 'live session', 'unplugged', 'cover', 'music',
+  'album', 'ep', 'single', 'song', 'track',
+];
+
 function isMusicRelevant(title: string, channelTitle: string): boolean {
   const t = title.toLowerCase();
   const c = channelTitle.toLowerCase();
-  const musicKeywords = [
-    'official video', 'official audio', 'lyrics', 'live', 'music video',
-    'album', 'ep', 'single', 'feat.', 'ft.', 'remix', 'acoustic',
-    'session', 'concert', 'performance', 'tour', 'official',
-  ];
-  return /^.+\s[-–]\s.+/.test(t)
-    || musicKeywords.some(k => t.includes(k))
-    || c.endsWith('- topic');
+
+  // Explicit music channel (YouTube auto-generated Topic channels are always music)
+  if (c.endsWith('- topic')) return true;
+
+  // If any strong non-music word appears, reject immediately
+  if (NON_MUSIC_WORDS.test(t)) return false;
+
+  // Must have at least one explicit music signal OR a dash pattern AND no non-music words
+  const hasStrongSignal = STRONG_MUSIC_SIGNALS.some(k => t.includes(k));
+  const hasDashPattern = /^.{2,40}\s[-–]\s.+/.test(t); // tighter: left side max 40 chars
+
+  return hasStrongSignal || hasDashPattern;
 }
 
 async function ytGet(url: string, token: string) {

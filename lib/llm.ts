@@ -12,7 +12,16 @@ export async function extractArtistsFromTitles(
 ): Promise<Record<string, string | null>> {
   if (titles.length === 0) return {};
 
-  const prompt = `You are a music expert. For each YouTube video title below, extract the performing artist name if it is a music video. Return ONLY a JSON object mapping each title to the artist name string, or null if it is not a music video or no artist can be identified. Do not include record labels, distributors, or movie/show names as artists.
+  const prompt = `You are a music expert. For each YouTube video title below, extract the PERFORMING ARTIST NAME only if it is clearly a music video or song.
+
+Rules:
+- Return the artist/band name only — NEVER a song title, album name, movie name, or show name
+- If the title is "Led Zeppelin - Stairway to Heaven", return "Led Zeppelin" NOT "Stairway to Heaven"
+- If the title is "Stairway to Heaven (Full Song)", return null — the artist is not identifiable
+- Return null for: sports, boxing, fitness, gym motivation, interviews, podcasts, vlogs, gaming, trailers, news
+- Return null for: motivational videos, workout compilations, fight highlights, documentaries
+- Do NOT extract names of athletes, boxers, YouTubers, or influencers as music artists
+- Do NOT return record label names (T-Series, Sony Music, Zee Music, Vevo, etc.)
 
 Titles:
 ${titles.map((t, i) => `${i + 1}. ${t}`).join('\n')}
