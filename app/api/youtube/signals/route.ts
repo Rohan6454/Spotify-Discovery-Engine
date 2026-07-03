@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession, ArtistSignal } from '@/lib/session';
 import { getValidGoogleToken } from '@/lib/auth';
-import { extractArtistsFromTitles } from '@/lib/llm';
+import { extractArtistsFromTitles, identifyArtistChannels } from '@/lib/llm';
 
 const LABEL_WORDS = /\b(records|music|entertainment|productions|films|studios|official|vevo|digital|t-series|sony|emi|universal|warner|zee|saregama|tips|speed)\b/i;
 
@@ -108,6 +108,24 @@ export async function GET() {
     subsUrl = data.nextPageToken
       ? `https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50&pageToken=${data.nextPageToken}`
       : '';
+  }
+
+  // Step 1b — LLM filter: identify which subscription channels are real artists
+  // Subscriptions like "Arijit Singh" or "The Local Train" are valid signals;
+  // "T-Series" or "Zee Music" are labels and should be ignored
+  const subChannelNames = [...signals.values()]
+    .filter(s => s.subscribed)
+    .map(s => s.channelTitle);
+
+  if (subChannelNames.length > 0) {
+    const artistChannelNames = await identifyArtistChannels(subChannelNames);
+    const artistSet = new Set(artistChannelNames.map(n => n.toLowerCase()));
+    for (const s of signals.values()) {
+      if (s.subscribed && artistSet.has(s.channelTitle.toLowerCase())) {
+        ensureByName(s.channelTitle).subscribed = true;
+      }
+    }
+    console.log(`[YouTube signals] subscriptions: ${subChannelNames.length} total, ${artistChannelNames.length} identified as artists:`, artistChannelNames);
   }
 
   // Step 2 — Liked videos: collect titles then batch-extract artists via LLM

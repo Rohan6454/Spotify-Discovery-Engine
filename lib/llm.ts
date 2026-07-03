@@ -81,6 +81,47 @@ Write a 2-3 sentence personalized insight about their discovery gap. Mention spe
 }
 
 /**
+ * Given a list of YouTube subscription channel names, returns only the ones
+ * that are actual music artist or band channels (not labels, aggregators,
+ * or non-music channels).
+ */
+export async function identifyArtistChannels(
+  channelNames: string[]
+): Promise<string[]> {
+  if (channelNames.length === 0) return [];
+
+  const prompt = `You are a music expert. Below is a list of YouTube channel names. For each one, decide if it is a music ARTIST or BAND channel (a real performing musician or group), or something else (record label, music aggregator, Bollywood studio, movie channel, non-music channel, news, sports, etc.).
+
+Return ONLY a JSON object mapping each number to true (is an artist) or false (is not an artist).
+
+Examples of artists: "Arijit Singh", "The Local Train", "Ed Sheeran", "Nucleya", "Prateek Kuhad"
+Examples of non-artists: "T-Series", "Zee Music Company", "Sony Music India", "Tips Official", "Speed Records", "Saregama Music"
+
+Channel names:
+${channelNames.map((n, i) => `${i + 1}. ${n}`).join('\n')}
+
+Respond with only valid JSON like:
+{"1": true, "2": false, "3": true}`;
+
+  try {
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0,
+      response_format: { type: 'json_object' },
+    });
+
+    const raw = response.choices[0]?.message?.content ?? '{}';
+    const parsed = JSON.parse(raw);
+
+    return channelNames.filter((_, i) => parsed[String(i + 1)] === true);
+  } catch (err) {
+    console.error('[llm] identifyArtistChannels failed:', err);
+    return [];
+  }
+}
+
+/**
  * Returns genre/mood tags for a list of artist names.
  * Returns a map of artistName → "Genre · Mood" string.
  */
