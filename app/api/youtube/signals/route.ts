@@ -81,7 +81,7 @@ export async function GET() {
   // Step 1 — Subscriptions (channel-level)
   let subsUrl = 'https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50';
   let subsCount = 0;
-  while (subsUrl && subsCount < 200) {
+  while (subsUrl && subsCount < 1000) {
     const data = await ytGet(subsUrl, token);
     if (!data) break;
     for (const item of data.items ?? []) {
