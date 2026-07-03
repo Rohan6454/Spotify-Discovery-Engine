@@ -228,53 +228,66 @@ export default function DiscoveryGapScreen() {
         </div>
       )}
 
-      {/* YouTube Liked Videos — source transparency */}
-      <div className="mt-10 rounded-lg bg-[#181818] overflow-hidden">
-        <button
-          onClick={() => setShowLikedVideos(v => !v)}
-          className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#1f1f1f] transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
-            <span className="text-white font-medium text-sm">YouTube Liked Videos Scanned</span>
-            <span className="text-[#a7a7a7] text-xs">
-              {likedVideos.length > 0 ? `${likedVideos.length} music videos found` : 'No music liked videos detected'}
-            </span>
-          </div>
-          <svg
-            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a7a7a7" strokeWidth="2"
-            className={`transition-transform ${showLikedVideos ? 'rotate-180' : ''}`}
-          >
-            <path d="M6 9l6 6 6-6"/>
-          </svg>
-        </button>
+      {/* YouTube Liked Videos — filtered to gap artists only */}
+      {(() => {
+        const gapChannelNames = new Set(
+          gapArtists.flatMap(a => [
+            a.channelTitle.toLowerCase(),
+            a.spotifyArtistName.toLowerCase(),
+          ])
+        );
+        const gapLikedVideos = likedVideos.filter(v =>
+          gapChannelNames.has(v.channel.toLowerCase())
+        );
 
-        {showLikedVideos && (
-          <div className="border-t border-[#282828]">
-            {likedVideos.length === 0 ? (
-              <div className="px-6 py-8 text-center">
-                <p className="text-[#a7a7a7] text-sm">No music liked videos were detected on this account.</p>
-                <p className="text-[#6a6a6a] text-xs mt-2">
-                  Discovery Engine looks for liked videos with music signals (official video, lyrics, acoustic, etc.).
-                  Try liking music videos on YouTube and run the analysis again.
-                </p>
+        return (
+          <div className="mt-10 rounded-lg bg-[#181818] overflow-hidden">
+            <button
+              onClick={() => setShowLikedVideos(v => !v)}
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#1f1f1f] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+                <span className="text-white font-medium text-sm">YouTube Videos Behind This Gap</span>
+                <span className="text-[#a7a7a7] text-xs">
+                  {gapLikedVideos.length > 0 ? `${gapLikedVideos.length} video${gapLikedVideos.length !== 1 ? 's' : ''} from missing artists` : 'No direct liked video matches'}
+                </span>
               </div>
-            ) : (
-              <div className="divide-y divide-[#282828]/50">
-                {likedVideos.map((v, i) => (
-                  <div key={i} className="flex items-start gap-3 px-6 py-3 hover:bg-[#1f1f1f] transition-colors">
-                    <div className="mt-0.5 shrink-0 w-1.5 h-1.5 rounded-full bg-[#FF0000] opacity-60" />
-                    <div className="min-w-0">
-                      <p className="text-[#e8e8e8] text-sm truncate">{v.title}</p>
-                      <p className="text-[#6a6a6a] text-xs mt-0.5">{v.channel}</p>
-                    </div>
+              <svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a7a7a7" strokeWidth="2"
+                className={`transition-transform ${showLikedVideos ? 'rotate-180' : ''}`}
+              >
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+
+            {showLikedVideos && (
+              <div className="border-t border-[#282828]">
+                {gapLikedVideos.length === 0 ? (
+                  <div className="px-6 py-8 text-center">
+                    <p className="text-[#a7a7a7] text-sm">No liked videos matched the missing artists directly.</p>
+                    <p className="text-[#6a6a6a] text-xs mt-2">
+                      These artists were likely found via subscriptions or playlist saves rather than liked videos.
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  <div className="divide-y divide-[#282828]/50">
+                    {gapLikedVideos.map((v, i) => (
+                      <div key={i} className="flex items-start gap-3 px-6 py-3 hover:bg-[#1f1f1f] transition-colors">
+                        <div className="mt-0.5 shrink-0 w-1.5 h-1.5 rounded-full bg-[#FF0000] opacity-60" />
+                        <div className="min-w-0">
+                          <p className="text-[#e8e8e8] text-sm truncate">{v.title}</p>
+                          <p className="text-[#6a6a6a] text-xs mt-0.5">{v.channel}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-      </div>
+        );
+      })()}
     </div>
   );
 }
