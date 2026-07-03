@@ -20,8 +20,11 @@ Rules:
 - If the title is "Stairway to Heaven (Full Song)", return null — the artist is not identifiable
 - Return null for: sports, boxing, fitness, gym motivation, interviews, podcasts, vlogs, gaming, trailers, news
 - Return null for: motivational videos, workout compilations, fight highlights, documentaries
-- Do NOT extract names of athletes, boxers, YouTubers, or influencers as music artists
+- Return null for: academic subjects, courses, lectures, tutorials (e.g. "Anthropology", "History", "Physics", "Philosophy", "Economics")
+- Return null for: generic topic words that are not known music artists (e.g. "Introduction", "Chapter", "Lecture", "Study", "Guide")
+- Do NOT extract names of athletes, boxers, YouTubers, influencers, or public figures who are not primarily musicians
 - Do NOT return record label names (T-Series, Sony Music, Zee Music, Vevo, etc.)
+- When uncertain whether a name is a real music artist or a topic/subject word, return null
 
 Titles:
 ${titles.map((t, i) => `${i + 1}. ${t}`).join('\n')}
