@@ -75,13 +75,8 @@ export async function POST(req: NextRequest) {
     for (const candidate of candidates) {
       const score = similarity(cleanedName, candidate.name);
       const pop = candidate.popularity ?? 0;
-      const hasGenres = (candidate.genres?.length ?? 0) > 0;
 
-      // Require either: genres listed (real musician) OR very high popularity (45+)
-      // This filters athletes/celebrities with novelty Spotify pages but no genre tags
-      const isLikelyMusician = hasGenres || pop >= 45;
-
-      if (score > bestScore && score >= MATCH_THRESHOLD && pop >= popularityFloor && isLikelyMusician) {
+      if (score > bestScore && score >= MATCH_THRESHOLD && pop >= popularityFloor) {
         bestScore = score;
         bestMatch = { id: candidate.id, name: candidate.name };
       }

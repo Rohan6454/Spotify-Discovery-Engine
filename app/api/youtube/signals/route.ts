@@ -132,15 +132,16 @@ export async function GET() {
       : '';
   }
 
-  // Step 3 — User playlists + items (cap: first 5 playlists)
+  // Step 3 — User playlists + items (cap: first 20 playlists, 100 items each)
+  // Expanded from 5/50 to capture users who curate playlists but don't use likes
   const playlistsData = await ytGet(
     'https://www.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50',
     token
   );
   const playlistItems: { videoTitle: string }[] = [];
-  for (const pl of (playlistsData?.items ?? []).slice(0, 5)) {
+  for (const pl of (playlistsData?.items ?? []).slice(0, 20)) {
     const itemsData = await ytGet(
-      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${pl.id}&maxResults=50`,
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${pl.id}&maxResults=100`,
       token
     );
     for (const item of itemsData?.items ?? []) {
@@ -192,6 +193,7 @@ export async function GET() {
   console.log(`[YouTube signals] total=${result.length} name-extracted=${nameSignals.length} sample-names:`, nameSignals.slice(0, 10).map(s => s.channelTitle));
 
   const likedVideos = likedItems.map(i => ({ title: i.videoTitle, channel: i.channelTitle }));
+  const nameSignalCount = result.filter(s => s.channelId.startsWith('name:')).length;
 
-  return NextResponse.json({ signals: result, likedVideos });
+  return NextResponse.json({ signals: result, likedVideos, nameSignalCount });
 }

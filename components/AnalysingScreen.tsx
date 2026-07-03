@@ -52,6 +52,7 @@ export default function AnalysingScreen() {
       localStorage.removeItem('de_gap_insight');
       localStorage.removeItem('de_genre_tags');
       localStorage.removeItem('de_yt_liked_videos');
+      localStorage.removeItem('de_signal_count');
 
       // Phase 1: Spotify library — held in client memory, not stored in session cookie
       setStep('spotify', 'active');
@@ -74,8 +75,9 @@ export default function AnalysingScreen() {
       setStep('youtube', 'active');
       const ytRes = await fetch('/api/youtube/signals');
       if (!ytRes.ok || cancelled) { setStep('youtube', 'error'); setErrorMsg('Failed to read YouTube data.'); return; }
-      const { signals: allSignals, likedVideos } = await ytRes.json();
+      const { signals: allSignals, likedVideos, nameSignalCount } = await ytRes.json();
       localStorage.setItem('de_yt_liked_videos', JSON.stringify(likedVideos ?? []));
+      localStorage.setItem('de_signal_count', String(nameSignalCount ?? 0));
 
       // Only search Spotify for name-extracted signals (from video titles like "Arijit Singh")
       // Subscription channel names (T-Series, Career247 etc) never match Spotify artists

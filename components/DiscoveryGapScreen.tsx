@@ -26,6 +26,7 @@ export default function DiscoveryGapScreen() {
   const [genreTags, setGenreTags] = useState<Record<string, string>>({});
   const [likedVideos, setLikedVideos] = useState<{ title: string; channel: string }[]>([]);
   const [showLikedVideos, setShowLikedVideos] = useState(false);
+  const [signalCount, setSignalCount] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -44,6 +45,8 @@ export default function DiscoveryGapScreen() {
       if (storedTags) setGenreTags(JSON.parse(storedTags));
       const storedVideos = localStorage.getItem('de_yt_liked_videos');
       if (storedVideos) setLikedVideos(JSON.parse(storedVideos));
+      const sc = localStorage.getItem('de_signal_count');
+      if (sc !== null) setSignalCount(Number(sc));
     } catch {
       setNoGapReason('not_run');
     }
@@ -109,6 +112,21 @@ export default function DiscoveryGapScreen() {
           Artists you've been exploring on YouTube that aren't in your Spotify library yet.
         </p>
       </div>
+
+      {/* Low signal warning */}
+      {signalCount !== null && signalCount < 8 && (
+        <div className="mb-6 p-4 rounded-lg bg-[#F59E0B]/10 border border-[#F59E0B]/30 flex gap-3">
+          <span className="text-[#F59E0B] text-lg shrink-0">⚠</span>
+          <div>
+            <p className="text-[#F59E0B] text-sm font-medium mb-0.5">Limited YouTube signals detected ({signalCount})</p>
+            <p className="text-[#a7a7a7] text-sm leading-relaxed">
+              Discovery Engine found very few music signals from your YouTube activity. Results may be incomplete.
+              To improve accuracy: <span className="text-[#e8e8e8]">like more music videos on YouTube</span>, or{' '}
+              <span className="text-[#e8e8e8]">save music to your YouTube playlists</span> — both are scanned automatically.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="flex gap-4 mb-8">
